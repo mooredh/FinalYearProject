@@ -1,19 +1,19 @@
 import flask
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
-books = [
+obj = [
     {
-        "name": "Moore",
-        "age": "21"
+        "isPredator": True,
+        "accuracy": 0.96
     }
 ]
 
-@app.route('/', methods=['GET'])
+@app.route('/api/v1/predators', methods=['POST', 'GET'])
 def home():
-    return jsonify(books)
+    return jsonify(obj)
 
 if __name__ == '__main__':
     # Threaded option to enable multiple instances for multiple user access support
