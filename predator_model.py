@@ -7,6 +7,9 @@ from nltk.tokenize import word_tokenize
 import joblib
 from flask import abort, make_response, jsonify
 
+nltk.download('stopwords')
+nltk.download('punkt')
+
 bow = joblib.load('models/bag_of_words_sex_pred.joblib')
 vic_pred_model = joblib.load('models/victim_from_predator_model.joblib')
 con_based_model = joblib.load('models/conversation_based_model.joblib')
@@ -14,9 +17,6 @@ con_based_model = joblib.load('models/conversation_based_model.joblib')
 stop_words = set(stopwords.words('english'))
 stop_words.add('apos')
 stop_words.add('amp')
-
-nltk.download('stopwords')
-nltk.download('punkt')
 
 class PredatorModel:
     def __init__(self, data):
