@@ -2,16 +2,10 @@ import flask
 from flask import request, jsonify, make_response, render_template
 import json
 from werkzeug.exceptions import HTTPException
+from predator_model import PredatorModel
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
-
-obj = [
-    {
-        "isPredator": True,
-        "accuracy": 0.96
-    }
-]
 
 @app.route('/', methods=['GET'])
 def home():
@@ -19,7 +13,12 @@ def home():
 
 @app.route('/api/v1/detect', methods=['POST'])
 def conversations():
-    return jsonify(obj)
+    data = request.get_json()['conversations']
+    res = PredatorModel(data)
+    res.clean()
+    prediction = res.predict()
+    print('\n\n', prediction, '\n\n')
+    return jsonify(prediction)
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):

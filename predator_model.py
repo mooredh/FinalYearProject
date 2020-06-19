@@ -11,6 +11,10 @@ bow = joblib.load('models/bag_of_words_sex_pred.joblib')
 vic_pred_model = joblib.load('models/victim_from_predator_model.joblib')
 con_based_model = joblib.load('models/conversation_based_model.joblib')
 
+stop_words = set(stopwords.words('english'))
+stop_words.add('apos')
+stop_words.add('amp')
+
 nltk.download('stopwords')
 nltk.download('punkt')
 
@@ -19,39 +23,6 @@ class PredatorModel:
         self.data = data
         self.idx_to_key = list()
         self.idx_to_key_vic = list()
-        self.stop_words = set(stopwords.words('english'))
-        self.stop_words.add('apos')
-        self.stop_words.add('amp')
-
-    def clean(self):
-        for key, val in self.data.items():
-            count = count_authors(val)
-            if count != 2:
-                response = make_response(jsonify(message="All conversations can have only two users"), 400)
-                abort(response)
-
-        remove_stop_words()
-
-    def predict(self):
-        con_pred = con_based_model.predict(get_conversation_based())
-        result = dict()
-        only_preds = dict()
-
-        for i in range(len(con_pred)):
-            con_id = self.idx_to_key[i]
-            result[con_id] = dict()
-            result[con_id]["predator_detected"] = con_pred[i]
-            if con_pred[i] == 1:
-                only_preds[con_id] = self.data[con_id]
-
-        vic_pred = vic_pred_model.predict(get_victim_from_predator(only_preds))
-
-        for i in range(len(vic_pred)):
-            con_id = self.idx_to_key_vic[i]
-            result[con_id]["predator"] = vic_pred[i]
-
-        return result
-
 
     def get_conversation_based(self):
         x = []
@@ -60,7 +31,7 @@ class PredatorModel:
             for text_line in conversation:
                 if text_line['text']:
                     x1 += " " + text_line['text']
-            self.key_to_idx.append(conversation_id)
+            self.idx_to_key.append(conversation_id)
             x.append(x1)
         return bow.transform(x).toarray()
 
@@ -92,7 +63,7 @@ class PredatorModel:
     def count_authors(self, chat):
         authors = set()
         for text_chat in chat:
-            set.add(text_chat['author'])
+            authors.add(text_chat['author'])
 
         return len(authors)
 
@@ -109,3 +80,34 @@ class PredatorModel:
                         filtered_sentence.append(w.lower())
 
                 text_line['text'] = ' '.join(filtered_sentence)
+
+    def clean(self):
+        for key, val in self.data.items():
+            count = self.count_authors(val)
+            if count != 2:
+                response = make_response(jsonify(message="All conversations can have only two users"), 400)
+                abort(response)
+
+        self.remove_stop_words()
+
+    def predict(self):
+        con_pred = con_based_model.predict(self.get_conversation_based())
+        result = dict()
+        only_preds = dict()
+
+        for i in range(len(con_pred)):
+            con_id = self.idx_to_key[i]
+            result[con_id] = dict()
+            result[con_id]["predator_detected"] = int(con_pred[i])
+            if con_pred[i] == 1:
+                only_preds[con_id] = self.data[con_id]
+
+        if len(only_preds) > 0:
+            vic_pred = vic_pred_model.predict(self.get_victim_from_predator(only_preds))
+
+            for i in range(len(vic_pred)):
+                con_id = self.idx_to_key_vic[i]
+                result[con_id]["predator"] = vic_pred[i]
+
+        return result
+

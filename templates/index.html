@@ -10,8 +10,22 @@
         <p>Hi! This API can take in chat data and determine if a sexual predator is in the chat. It will also tell you who the sexual predator is</p>
         <h3>Try it out by sending a post request to the path <span>/api/v1/detect</span></h3>
         <h4>Follow the below format for the request body:</h4>
-        <p>{
-            "conversation_id": 
-        }</p>
+        <pre>
+        {
+            "conversation_id": [{
+                "author": String,
+                "text": String
+            }]
+        }
+        </pre>
+        <h4>Response would be in format:</h4>
+        <pre>
+        {
+            "conversation_id": {
+                "predator_detected": 0 or 1,
+                "predator": String
+            }
+        }
+        </pre>
     </body>
 </html>
